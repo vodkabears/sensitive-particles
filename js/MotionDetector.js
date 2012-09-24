@@ -14,13 +14,6 @@ function MotionDetector(videoId, canvasSourceId, canvasBlendedId){
     var contextBlended = canvasBlended.getContext('2d');
     var blended;
 
-    /**
-    * Check getUserMedia support.
-    **/
-    var hasGetUserMedia = function(){
-        return !!(navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
-    };
-    
     //binary abs function
     var abs = function(value){
         return (value ^ (value >> 31)) - (value >> 31);
@@ -68,19 +61,19 @@ function MotionDetector(videoId, canvasSourceId, canvasBlendedId){
     /**
     * Constructor.
     **/
-    var constructor = function(){       
+    var constructor = function(){         
         if (navigator.getUserMedia) {
             navigator.getUserMedia({audio: true, video: true}, function(stream) {
                 video.src = stream;
             }, function(e){
-                alert('Webcam error!', e);
+                alert('Something wrong with your webcam!');
             });
         }
         else if (navigator.webkitGetUserMedia) {
             navigator.webkitGetUserMedia({audio:true, video:true}, function(stream) {
                 video.src = window.webkitURL.createObjectURL(stream);
             }, function(e){
-                alert('Webcam error!', e);
+                alert('Something wrong with your webcam!');
             });
         }
         
@@ -99,32 +92,11 @@ function MotionDetector(videoId, canvasSourceId, canvasBlendedId){
     };
     
     /**
-    * Check area for motion.
-    **/
-    self.checkArea = function(x, y, w, h){
-        var blendedData = contextBlended.getImageData(x, y, w, h);
-        var average = 0;
-        // loop over the pixels
-        for (var i = 0, len = blendedData.data.length / 4; i < len; i++) {
-            // make an average between the color channel
-            average += (blendedData.data[i*4] + blendedData.data[i*4+1] + blendedData.data[i*4+2]) / 3;
-        }
-        // calculate an average between of the color values of the note area
-        average = Math.round(average / (blendedData.data.length / 4));
-
-        if (average > 20) {
-            return true;
-        }
-
-        return false;
-    };
-    
-    /**
     * Get blended data.
     **/
     self.getBlended = function(){
         return blended;
-    }
+    };
     
     constructor();   
 }

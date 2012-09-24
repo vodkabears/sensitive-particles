@@ -74,7 +74,7 @@ function App(id, motionDetector){
     self.config = {
         W: canvas.width,
         H: canvas.height,
-        particlesCount: 1000
+        particlesCount: 3000
     };
     
     /**

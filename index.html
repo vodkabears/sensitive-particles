@@ -2,28 +2,45 @@
 <html>
     <head>
         <meta charset="utf-8" />
-        <title>Motion draw</title>
-
-        <link rel="stylesheet" href="css/style.css" />
+        <title>Sensitive particles</title>
         
-        <script src="js/lib/dat.gui.min.js"></script>
+        <link href='http://fonts.googleapis.com/css?family=Ubuntu:500' rel='stylesheet' type='text/css'>
+        <link href="css/style.css" rel="stylesheet" type="text/css" />
         
-        <script src="js/App.js"></script>
-        <script src="js/MotionDetector.js"></script>
-        <script>
-            window.onload = function(){                
-                var app = new App('canvas', new MotionDetector('webcam', 'source', 'blended'));
+        <script src="js/lib/dat.gui.min.js" type="text/javascript"></script>
+        
+        <script src="js/App.js" type="text/javascript"></script>
+        <script src="js/MotionDetector.js" type="text/javascript"></script>
+        
+        <script type="text/javascript">
+            window.onload = function(){
+                if( !!(navigator.getUserMedia ||
+                    navigator.webkitGetUserMedia ||
+                    navigator.mozGetUserMedia ||
+                    navigator.msGetUserMedia) ){
+                        
+                    var app = new App('canvas', new MotionDetector('webcam', 'source', 'blended'));
+                    
+                    var gui = new dat.GUI();
+                    gui.close();
+                    gui.add(app.config, 'particlesCount').onFinishChange(function(value){
+                        app.refresh();                    
+                    });
                 
-                var gui = new dat.GUI();
-                gui.close();
-                gui.add(app.config, 'particlesCount').onFinishChange(function(value){
-                    app.refresh();                    
-                });
+                } else {                    
+                    document.getElementById('canvas').style.display = 'none';
+                    
+                    var message = document.getElementById('message');
+                    message.innerHTML = 'Your browser doesn\'t support "getUserMedia" function.<br />Try it with Chrome.';
+                    message.style.display = 'block';                    
+                }
             }            
         </script>
     </head>
     <body>
         <canvas id="canvas" width="768" height="576"></canvas>
+        <div id="message"></div>
+        
         <video id="webcam" autoplay width="768" height="576"></video>
         <canvas id="source" width="768" height="576"></canvas>
         <canvas id="blended" width="768" height="576"></canvas>
