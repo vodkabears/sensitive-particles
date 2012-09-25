@@ -3,6 +3,12 @@ html, body{
     background: #eee url(../i/reticular_tissue.png);
 }
 
+.addthis_toolbox{
+    position: absolute;
+    left: 5px;
+    top: 5px;
+}
+
 #canvas{
     position: absolute;
     top: 50%;
