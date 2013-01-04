@@ -111,7 +111,7 @@ function App(){
 
         //Init getUserMedia
         if (navigator.getUserMedia) {
-            navigator.getUserMedia({audio: true, video: true}, function (stream) {
+            navigator.getUserMedia({video: true}, function (stream) {
                 webcam.src = stream;
                 animate();
             }, function () {
@@ -120,7 +120,7 @@ function App(){
                 message.style.display = 'block';
             });
         } else if (navigator.webkitGetUserMedia) {
-            navigator.webkitGetUserMedia({audio: true, video: true}, function (stream) {
+            navigator.webkitGetUserMedia({video: true}, function (stream) {
                 webcam.src = window.webkitURL.createObjectURL(stream);
                 animate();
             }, function () {
