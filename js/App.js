@@ -43,7 +43,7 @@ function App(){
     })();
 
     /**
-     * Fill canvas and redraw each particle.
+     * Fill the canvas and redraw an each particle.
      *
      * @private
      */
@@ -165,7 +165,7 @@ function Particle(maxX, maxY){
     };
     
     /**
-     * Select particle
+     * Select a particle
      *
      * @public
      */
@@ -188,7 +188,7 @@ function Particle(maxX, maxY){
     };
 
     /**
-     * Calculate next position and form of the particle.
+     * Calculate next position and form of a particle.
      *
      * @public
      */
