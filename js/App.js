@@ -1,23 +1,55 @@
 /**
-* Application. Root class.
-**/   
-function App(id, motionDetector){
+ * Application. Root class.
+ *
+ * @constructor
+ */
+function App(){
     var self = this;
     
-    //private
-    
-    var canvas = document.getElementById(id);
-    var ctx = canvas.getContext("2d");
-    var interval;
-    var particles;
+    var canvas = document.getElementById('canvas'),
+        ctx = canvas.getContext("2d"),
+        message = document.getElementById('message'),
+        webcam = document.getElementById('webcam'),
+        motionDetector = new MotionDetector(webcam),
+        gui = new dat.GUI(),
+        interval,
+        particles;
 
     /**
-    * Fill canvas and redraw each particle.
-    **/
-    var draw = function(){
+     * Configuration.
+     *
+     * @private
+     */
+    var config = {
+        W: canvas.width,
+        H: canvas.height,
+        particlesCount: 3000
+    };
+
+    /**
+     * Cross-browser requestAnimationFrame function
+     *
+     * @private
+     */
+    var requestAnimFrame = (function () {
+        return  window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.oRequestAnimationFrame ||
+            window.msRequestAnimationFrame ||
+            function (callback){
+                window.setTimeout(callback, 1000 / 60);
+            };
+    })();
+
+    /**
+     * Fill canvas and redraw each particle.
+     *
+     * @private
+     */
+    var animate = function(){
         ctx.globalCompositeOperation = 'source-over';
-        ctx.fillStyle = "rgba(0, 0, 0, 1)";
-        ctx.fillRect(0, 0, self.config.W, self.config.H);
+        ctx.clearRect(0, 0, config.W, config.H);
 
         //Update detector data.
         motionDetector.update();
@@ -25,19 +57,9 @@ function App(id, motionDetector){
 
         for(var t = 0, p, len = particles.length, average; t < len; t++) {
             p = particles[t];
-            average = 0;
-            
-            // make an average between the color channel
-            for(var y = Math.floor(p.y - p.radius), yk = Math.floor(p.y + p.radius); y < yk; y++) {
-                for(var x = Math.floor(p.x - p.radius), xk = Math.floor(p.x + p.radius), b; x < xk; x++){
-                    b = Math.floor(x * 4 + y * self.config.W * 4);
-                    average += (blendedData[b] + blendedData[b + 1] + blendedData[b + 2]) / 3;
-                }
-            }
-            average = Math.round(average / (p.radius * p.radius * 4) );
-            
-            //Check average. If condition is true - select particle.
-            if(average > 20){
+
+            //check an area of a particle for a motion
+            if(motionDetector.checkArea(p.x - p.radius, p.y - p.radius, 2 * p.radius, 2 * p.radius)){
                 ctx.globalCompositeOperation = 'lighter';
                 p.select();
             } else {
@@ -51,54 +73,84 @@ function App(id, motionDetector){
             ctx.arc(p.x, p.y, p.radius, 2 * Math.PI, false);
             ctx.fill();
         }
+
+        requestAnimFrame(animate);
     };
-    
+
     /**
-    * Constructor function.
-    **/
+     * Create particles again and redraw them.
+     *
+     * @private
+     */
+    var refresh = function(){
+        particles = [];
+
+        for(var i = 0; i < config.particlesCount; i++){
+            particles.push(new Particle(config.W, config.H));
+        }
+    };
+
+    /**
+     * Local constructor
+     *
+     * @private
+     */
     var constructor = function(){
         //create particles
         particles = [];
-        for(var i = 0; i < self.config.particlesCount; i++){
-            particles.push(new Particle(self.config.W, self.config.H));
+
+        for(var i = 0; i < config.particlesCount; i++){
+            particles.push(new Particle(config.W, config.H));
         }
-        
-        interval = setInterval(draw, 30);
-    };
-    
-    //public
-    
-    /**
-    * Public configuration.
-    **/    
-    self.config = {
-        W: canvas.width,
-        H: canvas.height,
-        particlesCount: 3000
-    };
-    
-    /**
-    * Create particles again and redraw them.
-    **/
-    self.refresh = function(){
-        clearInterval(interval);
-        
-        constructor();
+
+        //Init dat.GUI
+        gui.close();
+        gui.add(config, 'particlesCount').onFinishChange(function(value){
+            refresh();
+        });
+
+        //Init getUserMedia
+        if (navigator.getUserMedia) {
+            navigator.getUserMedia({audio: true, video: true}, function (stream) {
+                webcam.src = stream;
+                animate();
+            }, function () {
+                canvas.style.display = 'none';
+                message.innerHTML = 'Something wrong with your webcam!';
+                message.style.display = 'block';
+            });
+        } else if (navigator.webkitGetUserMedia) {
+            navigator.webkitGetUserMedia({audio: true, video: true}, function (stream) {
+                webcam.src = window.webkitURL.createObjectURL(stream);
+                animate();
+            }, function () {
+                canvas.style.display = 'none';
+                message.innerHTML = 'Something wrong with your webcam!';
+                message.style.display = 'block';
+            });
+        } else {
+            canvas.style.display = 'none';
+            message.innerHTML = 'Your browser doesn\'t support "getUserMedia" function.<br />Try it with Chrome or Opera.';
+            message.style.display = 'block';
+        }
     };
     
     constructor();
 }
 
 /**
-* Particle class
-**/  
+ * Particle class
+ *
+ * @constructor
+ */
 function Particle(maxX, maxY){
     var self = this;
     
-    //private
     /**
-    * Constructor
-    **/ 
+     * Local constructor
+     *
+     * @private
+     */
     var constructor = function(){
         self.x = Math.floor(Math.random() * maxX);
         self.y =  Math.floor(Math.random() * maxY);
@@ -112,10 +164,11 @@ function Particle(maxX, maxY){
         self.vo = Math.random() - 0.5;
     };
     
-    //public
     /**
-    * Select particle
-    **/ 
+     * Select particle
+     *
+     * @public
+     */
     self.select = function(){
         self.color = "rgba(255, 64, 128, " + self.opacity + ")";
         self.vx = Math.random() * 2 - 1;
@@ -125,16 +178,20 @@ function Particle(maxX, maxY){
     };
     
     /**
-    * Unselect particle
-    **/    
+     * Unselect particle
+     *
+     * @public
+     */
     self.unselect = function(){
         self.color = "rgba(16, 32, 64, " + self.opacity + ")";
         self.radius = self.oldRadius;
     };
-    
+
     /**
-    * Calculate next position and form of the particle.
-    **/    
+     * Calculate next position and form of the particle.
+     *
+     * @public
+     */
     self.process = function(){
         if(self.x < 0){
             self.vx = Math.random();
@@ -156,8 +213,8 @@ function Particle(maxX, maxY){
 
         self.x += self.vx;
         self.y += self.vy;
-        self.opacity += self.vo;        
+        self.opacity += self.vo;
     };
-    
+
     constructor();
 }
